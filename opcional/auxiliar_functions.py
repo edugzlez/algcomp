@@ -40,4 +40,3 @@ def discrete_logarithm(alpha, beta, p): # alpha ^ x = beta (mod p)
             y = y*alpha_m % p
 
     return None
-
