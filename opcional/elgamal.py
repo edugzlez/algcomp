@@ -65,4 +65,3 @@ def uncifrate(list_tuples, key):
     return "".join(map(lambda tup: chr(uncifrate_num(tup, key)), list_tuples))
 
 gamal = ElGamal(52673)
-
