@@ -1,0 +1,70 @@
+read "auxiliar.maple";
+read "1.euclides.maple";
+
+with(LinearAlgebra);
+with(PolynomialTools);
+
+berlekamp := proc(f, p, n)
+    local x_q, Q, i, x_qi, j, QI, QI_U, b, r, bbase, a, g1, g2, d_f; 
+    
+    x_q := fast_exp_fq(x, p^n, f, p); 
+    d_f := degree(f); 
+    Q := Matrix(d_f, d_f); 
+    for i to d_f do 
+        x_qi := fast_exp_fq(x_q, i - 1, f, p); 
+        for j to d_f do 
+            Q[i, j] := coeff(x_qi, x, j - 1); 
+        end do; 
+    end do; 
+
+    QI := Q - IdentityMatrix(d_f); 
+    QI_U := LUDecomposition(QI, output = 'U'); 
+    b := NullSpace(QI_U);
+    r := numelems(b);
+    
+    for i to r do 
+        bbase[i] := FromCoefficientVector(b[i], x); 
+    end do; 
+    
+    a := 0; 
+    
+    for i to r do
+        a := a + bbase[i]*rand(p)();
+    end do; 
+    g1 := gcd_euclides(a, f, polyrem, p) mod p; 
+    
+    if 0 < degree(g1) and g1 <> f then
+        return g1/lcoeff(g1) mod p; 
+    end if;
+    if a = 0 and iquo(p^n - 1, 2) = 0 then
+        b := 1; 
+    else
+        b := fast_exp_fq(a, iquo(p^n - 1, 2), f, p);
+    end if; 
+    g2 := gcd_euclides(b - 1, f, polyrem, p) mod p;
+    
+    if 0 < degree(g2) and g2 <> f then
+        return g2/lcoeff(g2) mod p; else return FAIL;
+    end if;
+end proc;
+
+
+iter_berlekamp := proc(f, n, p)
+    local aux_f, R, fact; 
+    aux_f := f;
+    fact := FAIL;
+    R := [];
+    while 1 < degree(aux_f) do
+        while fact = FAIL do 
+            fact := berlekamp(aux_f, n, p);
+        end do; 
+        aux_f := quo(aux_f, fact, x);
+        R := [op(R), fact];
+        fact := FAIL;
+    end do; 
+    if degree(aux_f) = 1 then
+        return [op(R), aux_f/lcoeff(aux_f) mod p];
+    else
+        return R;
+    end if;
+end proc;

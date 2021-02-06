@@ -1,0 +1,58 @@
+
+# Algoritmo de Euclides
+
+gcd_euclides := proc(a, b, remain, p) 
+    local r0, r1, reduce; 
+    if _params['p'] = NULL then 
+        reduce := proc(x) return x; end proc; 
+    else
+        reduce := proc(x) return (try x mod p; catch: 0 end try); end proc; 
+
+    end if; 
+    r0, r1 := a, b;
+    while not(r1 = 0 or reduce(r1) = 0) do 
+        r0, r1 := r1, remain(r0, r1); 
+    end do; 
+    return reduce(r0); 
+end proc;
+
+
+# Algoritmo extendido de Euclides
+
+extended_euclides := proc(a, b, quotient, p) 
+    local r0, r1, r2, s0, s1, s2, t0, t1, t2, q, reduce; 
+    if _params['p'] = NULL then 
+        reduce := proc(x) return x; end proc; 
+    else
+        reduce := proc(x) return (try x mod p; catch: 0 end try); end proc; 
+    end if; 
+    r0 := a; 
+    r1 := b; 
+    s0 := 1; 
+    s1 := 0; 
+    t0 := 0; 
+    t1 := 1; 
+    
+    while not(r1 = 0) do 
+        q := quotient(r0, r1); 
+        r2 := reduce(expand(r0 - q*r1)); 
+        r0 := r1; 
+        r1 := r2; 
+        s2 := reduce(expand(s0 - q*s1)); 
+        s0 := s1; 
+        s1 := s2; 
+        t2 := reduce(expand(t0 - q*t1)); 
+        t0 := t1; t1 := t2; 
+    end do; 
+    return s0, t0, r0;
+end proc;
+
+# Máximo común divisor de una lista
+
+gcd_euclides_list := proc(lst, remain) 
+    local r, b; r := 0;
+    for b in lst do
+        r := gcd_euclides(r, b, remain);
+    end do;
+    return r;
+end proc;

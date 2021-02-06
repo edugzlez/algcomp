@@ -1,0 +1,30 @@
+read "1.euclides.maple";
+
+# Parte primitiva de un polinomio
+ppart := proc(f)
+    local cont;
+    if f = 0 then
+        return 0;
+    else
+        cont := gcd_euclides_list([coeffs(f)], irem);
+        return f/cont;
+    end if; 
+end proc;
+
+
+# Máximo común divisor en un dominio de factorización única
+# 
+gcd_dfu := proc(f, g)
+    local r0, r1, n0, n1, ai, q;
+    r0 := f;
+    r1 := g;
+    n0 := degree(f);
+    n1 := degree(g);
+    while r1 <> 0 do
+        ai := lcoeff(r1, x)^(1 + n0 - n1)*r0; 
+        r0, r1 := r1, 
+        ppart(rem(ai, r1, x)); 
+        n0, n1 = n1, degree(r1); 
+    end do;
+    return expand(r0/lcoeff(r0));
+end proc;

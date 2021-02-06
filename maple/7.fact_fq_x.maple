@@ -1,0 +1,79 @@
+read "1.euclides.maple";
+read "auxiliar.maple";
+
+# Descomposición libre de cuadrados
+
+squarefree_decomposition := proc(f, p)
+    local u,v,w,h,H, df;
+    df := diff(f, x);
+    u := gcd_euclides(f, df, polyrem, p);
+    v := pquo(f, u);
+    w := pquo(df, u);
+    H := [];
+    
+    while (v mod p<>1) do
+        h :=gcd_euclides(v, w-diff(v, x), polyrem, p);
+        H :=[op(H), h/(lcoeff(h))mod p];
+        v, w := pquo(v, h), pquo(w-diff(v, x),h);
+    end do;
+    return map(proc(g) return [g, quo_times(f, g, p)] end proc, H); 
+end proc;
+
+# Distinct degree factorization
+distinctdegree_fact := proc(poly, p, n)
+    local h, f, G, g, q;
+    q := p^n;
+    f := poly;
+    h := x;
+    G := [];
+    while 1 < degree(f) do
+        h := powmod(h, q, f, x) mod p;
+        g := gcd_euclides(h - x, f, polyrem, p) mod p;
+        g := g/lcoeff(g) mod p;
+        if g <> 1 then 
+            G := [op(G), g];
+            f := quo(f, g, x) mod p;
+        end if; 
+    end do;
+    return map(proc(g) return [g, quo_times(poly, g, p)]; end proc, G);
+end proc;
+
+
+equaldegree_splitting := proc(f, p, n, d)
+    local a, b, g1, g2, q;
+
+    q := p^n;
+
+    a := randpoly(x, degree = rand(n)()) mod p;
+    if degree(a) = 0 then
+        return FAIL;
+    end if; 
+    
+    g1 := gcd_euclides(a, f, polyrem, p) mod p;
+    
+    if 0 < degree(g1) then
+        return g1; 
+    end if; 
+    
+    b := fast_exp_fq(a,  iquo(q^d - 1, 2), f, p);
+    
+    g2 := gcd_euclides(b - 1, f, polyrem, p) mod p; 
+    
+    if g2 <> 1 and g2 <> f then
+        return g2; 
+    else
+        return FAIL;
+    end if;
+end proc;
+
+equaldegree_factorization := proc(f, p, d)
+    local n, g; n := degree(f);
+    if n = d then
+        return f/lcoeff(f) mod p;
+    end if;
+    g := FAIL;
+    while g = FAIL or (g - f) mod p = 0 or (g - 1) mod p = 0 do
+        g := equaldegree_splitting(f, p, n, d) mod p;
+    end do;
+    return equaldegree_factorization(g mod p, p, d), equaldegree_factorization(quo(f, g, x) mod p, p, d);
+end proc;

@@ -1,0 +1,14 @@
+read "1.euclides.maple";
+read "auxiliar.maple";
+
+# Inverso en Fq
+inverse_Fq := proc(f, fr, p)
+    local s0, t0, r0; 
+    s0, t0, r0 := extended_euclides(f, fr, pquo, p);
+    if degree(r0) <> 0 then 
+        return FAIL;
+    else 
+        s0 := s0/r0 mod p;
+        return s0;
+    end if;
+end proc;

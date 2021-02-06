@@ -1,0 +1,27 @@
+read "1.euclides.maple";
+read "auxiliar.maple";
+
+
+# Test de irreducibilidad en F_q[x]
+
+es_irreducible := proc(f_, fr, p)
+    local n, a, q, t, b, f;
+
+    f := rem(f_, fr, x) mod p; 
+    n := degree(f);
+    q := p^degree(fr);
+    for t from 2 to iquo(n, 2) + 1 do
+        if irem(n, t) = 0 and isprime(t) then
+            b := fast_exp_fq(x, q^(n/t), f, p);
+            if gcd_euclides(b - x, f, polyrem, p) <> 1 then 
+                return false;
+            end if;
+        end if; 
+    end do; 
+    a := rem(fast_exp_fq(x, q^n, f, p) - x, f, x) mod p;
+    if a <> 0 then
+        return false; 
+    else
+        return true;
+    end if;
+end proc;

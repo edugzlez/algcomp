@@ -1,0 +1,180 @@
+# Resto en polinomios
+
+polyrem := proc(f, g) 
+    return rem(f, g, x); 
+end proc;
+
+
+# Resto en enteros de Gauss
+
+gi_rem := proc(w, z) 
+    local q, real, imag; 
+    q := w/z; real := round(Re(q)); 
+    imag := round(Im(q)); 
+    return w - z*(real + imag*I); 
+end proc;
+
+# Cociente en polinomios
+
+pquo := proc(f, g)
+    return quo(f, g, x);
+end proc;
+
+# Fast exponentation, exponenciación binaria.
+
+fast_exp := proc(x, n, red)
+    local reduce, a;
+
+    if _params['red'] = NULL then 
+        reduce := proc(x) return x; end proc; 
+    elif type(red, integer) then
+        reduce := proc(x) return x mod red; end proc;
+    else
+        reduce := red;
+    end if;
+
+    if n = 0 then
+        return 1;
+    elif n = 1 then
+        return reduce(x);
+    elif irem(n, 2) = 0 then
+        a := fast_exp(x, iquo(n, 2), reduce);
+        return reduce(a*a);
+    else
+        return reduce(x*fast_exp(x, n-1, reduce));
+    end if;
+
+end proc;
+
+# Powmod en F_p[x] /(fr)
+
+fast_exp_fq := proc(f, n, fr, p)
+    return fast_exp(f, n, proc(f) return polyrem(f, fr) mod p end proc);
+end proc;
+
+powmod_fq := proc(f, n, fr, p)
+    local r, i;
+    r := 1;
+    for i to n do
+        r := polyrem(r*f, fr) mod p;
+    end do;
+    return r;
+end proc;
+
+
+# Retorna el número de veces que se puede efectuar la divisón f*g en F_p[X]\(fr)
+quo_times := proc(f, g, p) 
+    local t, f_; t := 0; 
+    f_ := f; 
+    while rem(f_, g, x) mod p = 0 do 
+        f_ := quo(f_, g, x) mod p; 
+        t := t + 1;
+        end do; 
+    return t;
+end proc;
+
+# Productorio, módulo p
+piprod := proc(lst, p)
+    local r, e; r := 1;
+    for e in lst do 
+        r := r*e;
+    end do;
+    return expand(r) mod p; 
+end proc;
+
+# Dada una lista [[a_1, a_2], [b_1, b_2], ...] retorna a_1^a_2 *  b_1^b_2 * ... módulo p
+prod := proc(lst, p)
+    local r, e; r := 1;
+    for e in lst do 
+        r := r*e[1]^e[2];
+    end do;
+    return expand(r) mod p; 
+end proc;
+
+# Dada una lista [[a_1, a_2], [b_1, b_2], ...] retorna a_1 * b_1 * ... módulo p
+prod_no_exp := proc(lst, p)
+    local r, e; r := 1;
+    for e in lst do 
+        r := r*e[1];
+    end do;
+    return expand(r) mod p; 
+end proc;
+
+lenbin := proc(n)
+    local r, n_aux;
+    r := 0;
+    n_aux := n;
+    while n_aux <> 0 do
+        n_aux := iquo(n_aux, 2);
+        r := r+1;
+    end do;
+    return r;
+end proc;
+
+find_perf_pow := proc(n)
+    local ll, lm, lh, lgn, ab, b;
+    if n = 1 then
+        return (1, 1);
+    end if;
+    lgn := 1+lenbin(n);
+    for b from 2 to lgn-1 do
+        ll := 1;
+        lh := 2^(iquo(lgn, b)+1);
+        while ll < lh-1 do
+            lm := iquo(ll+lh, 2);
+            ab := fast_exp(lm, b);
+            if ab > n then
+                lh := lm;
+            elif ab < n then
+                ll := lm;
+            else
+                return (lm, b);
+            end if;
+        end do;
+    end do;
+    return (FAIL, FAIL);
+end proc:
+
+# Orden de a módulo p
+orderm := proc(a, p)
+    local aux, k;
+    aux := a mod p;
+    if aux = 0 then return FAIL end if;
+    k := 1;
+    while aux <> 1 and k<=p do
+        aux := aux*a mod p;
+        if (a mod p = aux or aux = 0) then return FAIL end if; 
+        k := k+1;
+    end do;
+
+    if aux <> 1 then return FAIL end if;
+    return k;
+end proc;
+
+
+
+# min r tal orderm(n, r) > trunc(log[2](n)^2)
+min_orderm := proc(n)
+    local o, r, cota;
+    cota := floor(log[2](n))^2+1;
+    r := 2;
+    o := orderm(n, r);
+    while o = FAIL or o<cota do
+        r := r+1;
+        o := orderm(n, r); 
+    end do;
+    return r;
+end proc;
+
+myord := proc(n)
+    local r, orden;
+    r := 2;
+    orden := order(n, r);
+    if orden = FAIL then orden := 0; end if; 
+    while orden <= floor(log[2](n))^2 do
+        r := r + 1;
+        orden := order(n, r); 
+        if orden = FAIL then orden := 0; end if; 
+    end do; 
+    return r;
+end proc;

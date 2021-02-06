@@ -5,7 +5,7 @@ def gcd(a, b):
         a, b = b, a%b
     return a
 
-def extended_euclides(a: int, b: int):
+def extended_euclides(a, b):
     x0, x1, y0, y1 = 0, 1, 1, 0
     while a != 0:
         (q, a), b = divmod(b, a), a
@@ -40,3 +40,31 @@ def discrete_logarithm(alpha, beta, p): # alpha ^ x = beta (mod p)
             y = y*alpha_m % p
 
     return None
+
+
+def fast_exponentation(a, n):
+    ans = 1
+    while n:
+        if n%2==1:
+            ans = ans * a
+        a = a*a
+        n = n//2
+    return ans
+
+
+def is_power(n):
+    if (n == 1): return (None,1)
+    lgn = 1 + ( len( bin ( abs ( n ) ) ) - 2)
+    for b in range(2,lgn):
+        lowa = 1
+        higha = 1 << (lgn // b + 1)
+        while lowa < higha - 1:
+            mida = (lowa + higha) >> 1
+            ab = fast_exponentation(mida,b) 
+            if ab > n:
+                higha = mida
+            elif ab < n:
+                lowa  = mida
+            else: 
+                return (mida, b)
+    return False

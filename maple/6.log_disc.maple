@@ -1,0 +1,30 @@
+read "auxiliar.maple";
+read "4.inv_fq.maple";
+
+# Logaritmo discreto
+# baby-step giant-step
+
+log_disc := proc(g, h, fr, p)
+    local m, t, i, j, alpha, beta, ginv, g_m;
+    m := ceil(sqrt(p^degree(fr) - 1));
+    t := table([]);
+
+    alpha := 1;
+    g_m := powmod_fq(g, m, fr, p);
+    for j from 0 to (m-1) do 
+        if not(member(t[alpha], t)) then t[alpha] := j; end if;
+        alpha := polyrem(alpha*g_m, fr) mod p;
+    end do;
+    
+    beta :=  polyrem(h, fr) mod p;
+    ginv := inverse_Fq(g, fr, p);
+
+    for i from 0 to (m-1) do 
+        if member(t[beta], t) then 
+            return t[beta]*m + i; 
+        end if;
+
+        beta := polyrem(beta*ginv, fr) mod p;
+    end do; 
+    return FAIL; 
+end proc;

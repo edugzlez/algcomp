@@ -1,0 +1,19 @@
+chinese_remainder := proc(mlist, vlist)
+    local m, result; 
+    m := mul(mlist);
+
+    result := add(zip(proc(m_i, v_i) 
+        local q, s_i, t_i, r_i, c_i; 
+        q := iquo(m, m_i); 
+        s_i, t_i, r_i := extended_euclides(q, m_i, iquo); 
+        c_i := irem(s_i*v_i, m_i); 
+        return c_i*q; 
+    end proc, mlist, vlist)); 
+    
+    result := irem(result, m);
+    if result < 0 then 
+        return result + m; 
+    else 
+        return result;
+    end if;
+end proc;

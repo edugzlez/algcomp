@@ -1,0 +1,38 @@
+with(numtheory);
+read "auxiliar.maple";
+read "1.euclides.maple";
+
+aks := proc(n)
+    local a, r, i, b, todiv, cota, aux_gcd; 
+    a, b := find_perf_pow(n); 
+    
+    if a <> FAIL then 
+        if 1 < b then
+            return false;
+        end if; 
+    end if; 
+    
+    r := min_orderm(n); 
+    
+    for i from 2 to r do 
+        aux_gcd := gcd_euclides(i, n, irem);
+        if 1 < aux_gcd and aux_gcd < n and i <= n then 
+            return false; 
+        end if; 
+    end do; 
+    
+    if n <= r then 
+        return true;
+    end if; 
+    
+    todiv := fast_exp(x, r) - 1; 
+    cota := trunc(sqrt(phi(r))*log[2](n)); 
+    
+    for a to cota do 
+        if rem(fast_exp_fq(x + a, n, todiv, n) - fast_exp_fq(x, n, todiv, n) - a, todiv, x) mod n <> 0 then 
+            return false; 
+        end if; 
+    end do; 
+    
+    return true; 
+end proc;
