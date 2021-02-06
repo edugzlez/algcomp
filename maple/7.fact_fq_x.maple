@@ -21,27 +21,30 @@ end proc;
 
 # Distinct degree factorization
 distinctdegree_fact := proc(poly, p, n)
-    local h, f, G, g, q;
+    local h, f, G, g, q, k;
     q := p^n;
     f := poly;
     h := x;
+    k := 1;
     G := [];
-    while 1 < degree(f) do
+    while 0 < degree(f) do
         h := powmod(h, q, f, x) mod p;
         g := gcd_euclides(h - x, f, polyrem, p) mod p;
         g := g/lcoeff(g) mod p;
-        if g <> 1 then 
-            G := [op(G), g];
+        while degree(g)>0 do 
+            G := [op(G), [g, k]];
             f := quo(f, g, x) mod p;
-        end if; 
+            h := polyrem(h, f) mod p;
+            g := gcd_euclides(h - x, f, polyrem, p) mod p;
+        end do; 
+        k := k+1;
     end do;
-    return map(proc(g) return [g, quo_times(poly, g, p)]; end proc, G);
+    return G
 end proc;
 
 
 equaldegree_splitting := proc(f, p, n, d)
     local a, b, g1, g2, q;
-
     q := p^n;
 
     a := randpoly(x, degree = rand(n)()) mod p;
@@ -59,8 +62,8 @@ equaldegree_splitting := proc(f, p, n, d)
     
     g2 := gcd_euclides(b - 1, f, polyrem, p) mod p; 
     
-    if g2 <> 1 and g2 <> f then
-        return g2; 
+    if degree(g2) <> 0 and g2 <> f then
+        return g2/lcoeff(g2) mod p; 
     else
         return FAIL;
     end if;
@@ -72,8 +75,16 @@ equaldegree_factorization := proc(f, p, d)
         return f/lcoeff(f) mod p;
     end if;
     g := FAIL;
-    while g = FAIL or (g - f) mod p = 0 or (g - 1) mod p = 0 do
+    do
         g := equaldegree_splitting(f, p, n, d) mod p;
-    end do;
+    until g <> FAIL and (polyrem(f, g) mod p = 0) and (degree(g)<degree(f) and degree(g)>0); 
     return equaldegree_factorization(g mod p, p, d), equaldegree_factorization(quo(f, g, x) mod p, p, d);
 end proc;
+
+
+poly_fact_fq := proc(f, p, n):
+    local step1, step2;
+    step1 := distinctdegree_fact(f, p, n);
+    step2 := map(x -> equaldegree_factorization(x[1], p, x[2]), step1);
+    return step2;
+end proc:

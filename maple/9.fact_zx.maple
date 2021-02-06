@@ -1,0 +1,73 @@
+with(combinat);
+
+read "auxiliar.maple";
+read "1.euclides.maple";
+read "7.fact_fq_x.maple";
+
+poly_coeffs_p2 := proc(f, p)
+    local auxf, c, i;
+    auxf := expand(f) mod p;
+    for i from 0 to degree(auxf) do
+        c := coeff(auxf, x, i);
+        if abs(c) > iquo(p, 2)  then
+            if c > 0 then
+                auxf := auxf - p*x^i;
+            else
+                auxf := auxf + p*x^i; 
+            end if;
+        end if;
+    end do;
+    return auxf;
+end proc;
+
+fact_zx := proc(f)
+    local n, A, b, B, p, auxf,r, T,s,G, f_s, q, change, S, g_s, i, h_s, g_;
+    n := degree(f);
+
+    if n = 1 then
+        return {f}
+    end if;
+
+    A := max(map(abs, [coeffs(f)]));
+    b := lcoeff(f);
+    B := sqrt(n+1) * (2^n) * A * b;
+    p := floor(2*B);
+    do
+        p := nextprime(p);
+        auxf := f mod p;
+    until degree(gcd_euclides(auxf, diff(auxf, x), polyrem) mod p) = 0;
+    
+    auxf := f/b mod p;
+
+    g_ := map(v-> poly_coeffs_p2(v,p), poly_fact_fq(auxf, p, 1));
+    r := nops(g_);
+    g_ = Array(g_);
+    T := {seq(1 .. r)};
+    s := 1;
+    G := {};
+    f_s := f; 
+    while 2*s <= nops(T) do
+        change := false;
+        for S in choose(T, s) do
+            g_s := b;
+            for i in S do g_s := expand(g_s*g_[i]) mod p end do;
+            g_s := poly_coeffs_p2(g_s, p);
+            
+
+            h_s := b;
+            for i in (T minus S) do h_s := expand(h_s*g_[i]) mod p end do;
+            h_s := poly_coeffs_p2(h_s, p);
+
+            if add(map(abs, [coeffs(g_s)]))*add(map(abs, [coeffs(h_s)])) <= floor(B) then
+                T := T minus S;
+                G := G union {ppart(g_s)};
+                f_s := ppart(h_s);
+                b := lcoeff(f_s);
+                change := true;
+                break;
+            end if;
+        end do;
+        if not(change) then s := s+1; end if;
+    end do;
+    return G union {f_s};
+end proc;

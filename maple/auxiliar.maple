@@ -178,3 +178,8 @@ myord := proc(n)
     end do; 
     return r;
 end proc;
+
+
+ppart := proc(f)
+    return f/gcd_euclides_list([coeffs(f)], irem);
+end proc;
